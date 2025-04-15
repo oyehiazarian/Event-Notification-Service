@@ -33,7 +33,6 @@ public class EventsService {
 
         Events events = new Events();
 
-
         events.setTitle(request.getTitle());
         events.setTopic(request.getTopic());
         events.setContent(request.getContent());
