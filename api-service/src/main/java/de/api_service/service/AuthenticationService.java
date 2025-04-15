@@ -1,5 +1,7 @@
 package de.api_service.service;
 
+import java.util.Optional;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,6 +23,9 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
 
     private final JwtService jwtService;
+
+    public static Long USER_ID;
+
 
     public AuthenticationService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtService jwtService) {
         this.userRepository = userRepository;
@@ -47,7 +52,17 @@ public class AuthenticationService {
 
         userRepository.save(user);
 
+
+
         String token = jwtService.generateToken(user);
+
+        Optional<User> optionalUser = userRepository.findByUsername(request.getUsername());
+        if (optionalUser.isPresent()) {
+            Long userId = optionalUser.get().getId();
+
+
+        }
+
 
         return new AuthenticationResponse(token);
     }
@@ -62,8 +77,13 @@ public class AuthenticationService {
                 ));
 
         User user = userRepository.findByUsername(request.getUsername()).orElseThrow();
+        USER_ID= user.getId();
         String token = jwtService.generateToken(user);
+
         return new AuthenticationResponse(token);
 
     }
+
+
+
 }
