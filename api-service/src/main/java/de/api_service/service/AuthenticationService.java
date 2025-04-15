@@ -20,19 +20,20 @@ public class AuthenticationService {
 
     private final AuthenticationManager authenticationManager;
 
-    public AuthenticationService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager) {
+    private final JwtService jwtService;
+
+    public AuthenticationService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtService jwtService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
     }
 
 
-
-    public void register(User request){
+    public AuthenticationResponse register(User request){
         if (userRepository.findByUsername(request.getUsername()).isPresent()){
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Account with this username is already exists");
         }
-
 
         User user = new User();
 
@@ -45,11 +46,15 @@ public class AuthenticationService {
         user.setRole(request.getRole());
 
         userRepository.save(user);
+
+        String token = jwtService.generateToken(user);
+
+        return new AuthenticationResponse(token);
     }
 
 
 
-    public void authenticate(User request) {
+    public AuthenticationResponse authenticate(User request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUsername(),
@@ -57,6 +62,8 @@ public class AuthenticationService {
                 ));
 
         User user = userRepository.findByUsername(request.getUsername()).orElseThrow();
+        String token = jwtService.generateToken(user);
+        return new AuthenticationResponse(token);
 
     }
 }

@@ -14,8 +14,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.Setter;
 
 @Entity
 @Table(name = "usersecurity")
@@ -38,7 +36,7 @@ public class User implements UserDetails {
     private String Nachname;
 
     @Column(name = "telefonnummer")
-    private int  telefonnummer;
+    private String telefonnummer;
 
     @Column(name = "role", nullable = false)
     private String role; // Роль пользователя (например, "user", "admin")
@@ -106,11 +104,11 @@ public class User implements UserDetails {
         Nachname = nachname;
     }
 
-    public int getTelefonnummer() {
+    public String getTelefonnummer() {
         return telefonnummer;
     }
 
-    public void setTelefonnummer(int telefonnummer) {
+    public void setTelefonnummer(String telefonnummer) {
         this.telefonnummer = telefonnummer;
     }
 

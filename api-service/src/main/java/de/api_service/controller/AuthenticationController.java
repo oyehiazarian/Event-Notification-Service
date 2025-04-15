@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.api_service.model.AuthenticationResponse;
 import de.api_service.model.User;
 import de.api_service.service.AuthenticationService;
 
@@ -19,15 +20,14 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public String register(@RequestBody User request){
-        authenticationService.register(request);
-        return "User is saved";
+    public ResponseEntity<AuthenticationResponse> register(@RequestBody User request){
+
+        return ResponseEntity.ok(authenticationService.register(request));
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody User request){
-        authenticationService.authenticate(request);
-        return "Successfully";
+    public ResponseEntity<AuthenticationResponse> login(@RequestBody User request){
+        return ResponseEntity.ok(authenticationService.authenticate(request));
     }
 
 }
