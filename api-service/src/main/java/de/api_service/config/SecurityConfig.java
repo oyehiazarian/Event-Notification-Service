@@ -14,8 +14,10 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.RequestContextFilter;
 
+import de.api_service.filter.JwtAuthenticationFilter;
 import de.api_service.service.UserDetailsServiceImp;
 
 @EnableWebSecurity
@@ -24,9 +26,12 @@ public class SecurityConfig {
 
     private final UserDetailsServiceImp userDetailsServiceImp;
 
-    public SecurityConfig( UserDetailsServiceImp userDetailsService) {
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    public SecurityConfig( UserDetailsServiceImp userDetailsService, JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.userDetailsServiceImp = userDetailsService;
 
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
     @Bean
@@ -34,7 +39,7 @@ public class SecurityConfig {
         return  httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(
-                        req->req.requestMatchers("/login/**", "/register/**")
+                        req->req.requestMatchers("/login/**", "/register/**", "/new_event")
                                 .permitAll()
                                 .requestMatchers("/admin_only/**").hasAuthority("ADMIN")
                                 .anyRequest()
@@ -42,6 +47,7 @@ public class SecurityConfig {
                 ).userDetailsService(userDetailsServiceImp)
                 .sessionManagement(session->session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
                 .logout(logout-> logout.permitAll())
 
