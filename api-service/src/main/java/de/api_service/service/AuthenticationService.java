@@ -47,26 +47,13 @@ public class AuthenticationService {
         user.setVorname(request.getVorname());
         user.setNachname(request.getNachname());
         user.setTelefonnummer(request.getTelefonnummer());
-
         user.setRole(request.getRole());
 
         userRepository.save(user);
-
-
-
         String token = jwtService.generateToken(user);
-
-        Optional<User> optionalUser = userRepository.findByUsername(request.getUsername());
-        if (optionalUser.isPresent()) {
-            Long userId = optionalUser.get().getId();
-
-
-        }
-
 
         return new AuthenticationResponse(token);
     }
-
 
 
     public AuthenticationResponse authenticate(User request) {
@@ -77,13 +64,9 @@ public class AuthenticationService {
                 ));
 
         User user = userRepository.findByUsername(request.getUsername()).orElseThrow();
-        USER_ID= user.getId();
         String token = jwtService.generateToken(user);
 
         return new AuthenticationResponse(token);
 
     }
-
-
-
 }
