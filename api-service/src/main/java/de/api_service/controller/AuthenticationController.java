@@ -4,7 +4,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-
 import de.api_service.model.AuthenticationResponse;
 import de.api_service.model.User;
 import de.api_service.service.AuthenticationService;
@@ -29,5 +28,4 @@ public class AuthenticationController {
     public ResponseEntity<AuthenticationResponse> login(@RequestBody User request){
         return ResponseEntity.ok(authenticationService.authenticate(request));
     }
-
 }
