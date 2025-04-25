@@ -1,0 +1,51 @@
+.nav-header {
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: #f9fafb; /* Можно заменить на #f9fafb если хочешь мягче */
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 1000;
+  padding: 16px 32px;
+  box-sizing: border-box;
+}
+
+.nav-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.nav-logo .logo-icon {
+  font-size: 24px;
+  color: #6366f1; /* Indigo-500 */
+}
+
+.logo-text{
+  font-weight: 400;
+  color:#6366f1
+}
+
+.nav-menu {
+  display: flex;
+  gap: 32px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.nav-menu a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.nav-auth .logout-link {
+  font-weight: 600;
+  text-decoration: none;
+  color: #111827;
+  display: flex;
+  align-items: center;
+}
+
+  
