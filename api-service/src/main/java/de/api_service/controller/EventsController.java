@@ -1,5 +1,6 @@
 package de.api_service.controller;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,9 +18,8 @@ public class EventsController {
     }
 
     @PostMapping("/new_event")
-    public String newEvent(@RequestBody Events events) {
-        eventsService.registerNewEvent(events);
-        return "OK";
+    public ResponseEntity<String> newEvent(@RequestBody Events events) {
+        return ResponseEntity.ok(eventsService.registerNewEvent(events));
 
     }
 
