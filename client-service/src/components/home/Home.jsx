@@ -39,7 +39,7 @@ const Home = () => {
         title: formData.title,
         topic: formData.topic,
         content: formData.content,
-        due_date: formData.content,
+        due_date: formData.due_date,
         userId: {}
        
       }),
