@@ -1,32 +1,84 @@
 /* Home.css */
 .container {
-    padding: 2rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-  }
-  
-  .button {
-    display: flex; /* Делаем кнопку flex-контейнером */
-    justify-content: center; /* Горизонтальное выравнивание текста */
-    align-items: center; /* Вертикальное выравнивание текста */
-    padding: 16px 32px; /* Увеличиваем отступы */
-    font-size: 18px; /* Увеличиваем размер шрифта */
-    font-weight: 600;
-    background-color: #4f46e5;
-    color: white;
-    border: none;
-    border-radius: 8px; /* Увеличиваем радиус закругления для лучшего вида */
-    cursor: pointer;
-    text-align: center;
-    min-width: 200px; /* Минимальная ширина кнопки */
-    max-width: 300px; /* Максимальная ширина кнопки */
-    white-space: nowrap; /* Текст не будет обрезаться */
-    box-sizing: border-box; /* Чтобы padding не искажал размеры */
-  }
-  
-  .button:hover {
-    background-color: #3b36c1; /* Изменение цвета кнопки при наведении */
-  }
-  
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.button {
+  display: flex; /* Делаем кнопку flex-контейнером */
+  justify-content: center; /* Горизонтальное выравнивание текста */
+  align-items: center; /* Вертикальное выравнивание текста */
+  padding: 16px 32px; /* Увеличиваем отступы */
+  font-size: 18px; /* Увеличиваем размер шрифта */
+  font-weight: 600;
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px; /* Увеличиваем радиус закругления для лучшего вида */
+  cursor: pointer;
+  text-align: center;
+  min-width: 200px; /* Минимальная ширина кнопки */
+  max-width: 300px; /* Максимальная ширина кнопки */
+  white-space: nowrap; /* Текст не будет обрезаться */
+  box-sizing: border-box; /* Чтобы padding не искажал размеры */
+}
+
+.button:hover {
+  background-color: #3b36c1; /* Изменение цвета кнопки при наведении */
+}
+
+.task-form {
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  width: 600px;
+  height: 850px;
+}
+
+.form-field {
+  margin-bottom: 17px;
+}
+
+.form-field label {
+  font-size: 14px;
+  margin-bottom: 5px;
+  display: block;
+  color: #333;
+  text-align: center
+}
+
+.form-field input,
+.form-field textarea {
+  width: 90%;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+textarea {
+  margin-left: 30px;
+  width: 90%;
+  resize: vertical;
+  height: 150px;
+}
+
+.submit-button {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+}
+
+.submit-button:hover {
+  background-color: #45a049;
+}
