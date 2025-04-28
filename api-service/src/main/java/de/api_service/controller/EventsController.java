@@ -1,5 +1,7 @@
 package de.api_service.controller;
 
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,8 +20,14 @@ public class EventsController {
     }
 
     @PostMapping("/new_event")
-    public ResponseEntity<String> newEvent(@RequestBody Events events) {
-        return ResponseEntity.ok(eventsService.registerNewEvent(events));
+    public ResponseEntity<Map<String, String>> newEvent(@RequestBody Events events) {
+       eventsService.registerNewEvent(events);
+           Map<String, String> body = Map.of(
+                   "status", "successfully"
+           );
+           return ResponseEntity.status(200)
+                   .body(body);
+
 
     }
 

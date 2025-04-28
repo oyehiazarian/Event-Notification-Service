@@ -39,26 +39,32 @@ const Home = () => {
         title: formData.title,
         topic: formData.topic,
         content: formData.content,
-        due_date: "",
+        due_date: formData.content,
         userId: {}
        
       }),
+    })
+    .then((response) => {
+      if (!response.ok) {
+        const error = new Error('Server error');
+        error.status = response.status;
+        throw error;
+      }
+      return response.json(); 
     })  
       .then((data) => {
         alert('New task added');
-        setShowForm(false);  // Скрыть форму после отправки
+        setShowForm(false);  
         setFormData({
           title: '',
           topic: '',
           content: '',
-          due_date: '',
-        }); // Очистить поля
+          due_date: "",
+        }); 
       })
       .catch((error) => {
-        console.error('Error:', error);
-
-
-        alert('Failed to add new task');
+        console.error('Error status:', error.status); 
+        alert(`Error: ${error.status}`);
       });
     }
 
@@ -66,7 +72,7 @@ const Home = () => {
     <div className="container">
       {!showForm ? (
         <button className="button" onClick={() => setShowForm(true)}>
-          New Task
+          New Event
         </button>
       ) : (
         <form className="task-form" onSubmit={handleSubmit}>
@@ -102,7 +108,7 @@ const Home = () => {
           <div className="form-field">
             <label>Due Date</label>
             <input
-              type="date"
+              type="datetime-local"
               name="due_date"
               value={formData.due_date}
               onChange={handleChange}
