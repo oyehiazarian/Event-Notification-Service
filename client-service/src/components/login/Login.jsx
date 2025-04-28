@@ -46,6 +46,9 @@ function Login() {
       });
 
       if (res.ok) {
+        const data = await res.json();
+        const token = data.token; 
+        localStorage.setItem("token", token);
         navigate("/home");
       } else {
         alert("Ошибка при регистрации");
@@ -66,6 +69,10 @@ function Login() {
       });
 
       if (res.ok) {
+        const data = await res.json();
+        const token = data.token; 
+        localStorage.setItem("token", token);
+        console.log(token)
         navigate("/home");
       } else {
         alert("Неверный логин или пароль");

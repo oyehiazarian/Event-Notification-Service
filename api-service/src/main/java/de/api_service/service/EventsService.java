@@ -28,7 +28,7 @@ public class EventsService {
 
     }
 
-    public String registerNewEvent(Events request) {
+    public boolean registerNewEvent(Events request) {
         Events events = new Events();
 
         events.setTitle(request.getTitle());
@@ -38,8 +38,8 @@ public class EventsService {
 
         events.setUserId(gettingUserId());
         eventsRepository.save(events);
+        return true;
 
-        return "The Event was successfully created ";
     }
 
     public String allEventsFromUser() {
