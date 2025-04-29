@@ -1,11 +1,9 @@
 package de.api_service.service;
 
 import java.util.List;
-
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
 import de.api_service.model.Events;
 import de.api_service.model.User;
 import de.api_service.repository.EventsRepository;
