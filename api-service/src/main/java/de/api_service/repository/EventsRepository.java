@@ -12,4 +12,8 @@ import de.api_service.model.User;
 public interface EventsRepository extends JpaRepository<Events, Long> {
     List<Events> findAllByUserId(User userId);
 
+
+
+    List<Events> findByIdGreaterThan(Long lastId);
+
 }

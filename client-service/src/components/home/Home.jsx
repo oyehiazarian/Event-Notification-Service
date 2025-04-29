@@ -27,7 +27,7 @@ const Home = () => {
       return;
     }
     e.preventDefault();
-    fetch('http://localhost:8080/new_event', {
+    fetch('http://localhost:8090/new_event', {
       method: 'POST',
     
       headers: {

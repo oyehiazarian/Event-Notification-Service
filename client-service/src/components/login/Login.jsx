@@ -39,7 +39,7 @@ function Login() {
     };
 
     try {
-      const res = await fetch("http://localhost:8080/register", {
+      const res = await fetch("http://localhost:8090/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dataToSend),
@@ -62,7 +62,7 @@ function Login() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:8080/login", {
+      const res = await fetch("http://localhost:8090/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(loginData),
