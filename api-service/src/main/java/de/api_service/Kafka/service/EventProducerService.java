@@ -1,20 +1,15 @@
 package de.api_service.Kafka.service;
 
 import java.util.List;
-import java.util.Map;
-
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.config.ObjectPostProcessor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
 import de.api_service.model.Events;
 import de.api_service.repository.EventsRepository;
 
@@ -41,7 +36,7 @@ public class EventProducerService {
         for(Events event:events){
             Hibernate.initialize(event.getUserId());
             String json = convertEventToJson(event);
-            kafkaTemplate.send(TOPIC, event.getId().toString(), json);
+            kafkaTemplate.send(TOPIC, event.getUserId().getUsername(), json);
         }
 
         if (!events.isEmpty()) {
@@ -49,15 +44,11 @@ public class EventProducerService {
         }
     }
 
-
-
     public String convertEventToJson(Events event) throws JsonProcessingException {
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         String json = mapper.writeValueAsString(event);
         return json;
-
     }
-
 }
