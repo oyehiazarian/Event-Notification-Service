@@ -1,4 +1,5 @@
 package de.bot_consumer.bot;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -6,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -16,30 +18,21 @@ import de.bot_consumer.kafka.KafkaConsumerService;
 
 @Component
 public class EventBot extends TelegramLongPollingBot {
+
     private static final Logger LOG = LoggerFactory.getLogger(EventBot.class);
+
     private static final String START = "/start";
 
-    private static final String USD = "/usd";
-
-    private static final String EUR = "/eur";
-
-    private static final String HELP = "/help";
-
-    private static final String WEATHER = "/weather";
-
-    private static String username;
-
     @Autowired
+    @Lazy
     private KafkaConsumerService kafkaConsumerService;
-
-
 
     private final Map<Long, String> waitingForInput = new HashMap<>();
 
-
-    public EventBot(@Value("${bot.token}") String botToken){
+    public EventBot(@Value("${bot.token}") String botToken) {
         super(botToken);
     }
+
     @Override
     public void onUpdateReceived(Update update) {
         if (!update.hasMessage() || !update.getMessage().hasText()) {
@@ -49,11 +42,10 @@ public class EventBot extends TelegramLongPollingBot {
         var chatId = update.getMessage().getChatId();
 
         if (waitingForInput.containsKey(chatId)) {
-            var command = waitingForInput.remove(chatId); // Получаем команду, для которой ждали ввод
-            handleUserInput(chatId, command, message); // Передаем введенные данные в обработчик
+            var command = waitingForInput.remove(chatId);
+            handleUserInput(chatId, command, message);
             return;
         }
-
 
         switch (message) {
             case START -> {
@@ -71,17 +63,8 @@ public class EventBot extends TelegramLongPollingBot {
     private void handleUserInput(Long chatId, String command, String userInput) {
         switch (command) {
             case "START":
-
-                sendMessage(chatId, "Thank you");
-
-                kafkaConsumerService.getCurrentUsername(userInput);
-                sendMessage(chatId, kafkaConsumerService.getAllAdminMessages());
-                String firstVersion =  kafkaConsumerService.getAllAdminMessages();
-                sendMessage(chatId, firstVersion);
-
-
-
-
+                sendMessage(chatId, "Thank you! Now listening to your events.");
+                kafkaConsumerService.registerUser(userInput, chatId);
         }
     }
 
@@ -98,7 +81,7 @@ public class EventBot extends TelegramLongPollingBot {
         sendMessage(chatId, formattedText);
     }
 
-    private void sendMessage(Long chatId, String text) {
+    public void sendMessage(Long chatId, String text) {
         var chatIdStr = String.valueOf(chatId);
         var sendMessage = new SendMessage(chatIdStr, text);
         try {
@@ -107,7 +90,6 @@ public class EventBot extends TelegramLongPollingBot {
             LOG.error("Error with sending message" + e);
         }
     }
-
 
     private void unknownCommand(Long chatId) {
         var text = "Не удалось распознать команду!";
@@ -118,6 +100,5 @@ public class EventBot extends TelegramLongPollingBot {
     public String getBotUsername() {
         return "event001_bot";
     }
-
 
 }
