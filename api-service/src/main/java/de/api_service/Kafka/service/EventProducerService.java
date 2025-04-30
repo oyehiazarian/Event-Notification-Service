@@ -47,7 +47,7 @@ public class EventProducerService {
     public String convertEventToJson(Events event) throws JsonProcessingException {
 
         ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
+            mapper.registerModule(new JavaTimeModule());
         String json = mapper.writeValueAsString(event);
         return json;
     }
