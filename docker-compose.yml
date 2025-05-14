@@ -1,0 +1,142 @@
+services:
+  # === BACKEND 1 ===
+  backend1:
+    build: ./api-service
+    container_name: api-services
+    ports:
+      - "8090:8090"
+    depends_on:
+      - kafka2
+      - postgres
+    networks:
+      - kafka-net
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/NotificationSystem
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+
+  # === BACKEND 2 ===
+  backend2:
+    build: ./bot-consumer
+    container_name: bot-consumer
+    ports:
+      - "8070:8070"
+    depends_on:
+      - kafka2
+      - postgres
+    networks:
+      - kafka-net
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/NotificationSystem
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+
+  # === FRONTEND ===
+  frontend:
+    build: ./client-service
+    container_name: frontend
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend1
+      - backend2
+    networks:
+      - kafka-net
+
+  # === ZOOKEEPER ===
+  zoo2:
+    image: confluentinc/cp-zookeeper:7.3.2
+    hostname: zoo2
+    container_name: zoo2
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_SERVER_ID: 1
+    networks:
+      - kafka-net
+
+  # === KAFKA ===
+  kafka2:
+    image: confluentinc/cp-kafka:7.3.2
+    hostname: kafka2
+    container_name: kafka2
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+      - "19092:19092"
+      - "9999:9999"
+    environment:
+      KAFKA_LISTENERS: INTERNAL://kafka2:9092,EXTERNAL://0.0.0.0:29092,DOCKER://0.0.0.0:19092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka2:9092,DOCKER://kafka2:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: zoo2:2181
+      KAFKA_BROKER_ID: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_JMX_PORT: 9999
+      KAFKA_JMX_HOSTNAME: 127.0.0.1
+      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+    depends_on:
+      - zoo2
+    networks:
+      - kafka-net
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+
+  # === KAFKA UI ===
+  kafka-ui2:
+    container_name: kafka-ui2
+    image: provectuslabs/kafka-ui:v0.7.1
+    ports:
+      - "8080:8080"
+    depends_on:
+      - kafka2
+    environment:
+      DYNAMIC_CONFIG_ENABLED: 'true'
+      KAFKA_CLUSTERS_0_NAME: wizard_test
+      KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS: kafka2:19092
+    networks:
+      - kafka-net
+
+  # === POSTGRES ===
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_DB: NotificationSystem
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - kafka-net
+
+  # === PGADMIN ===
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    depends_on:
+      - postgres
+    networks:
+      - kafka-net
+
+networks:
+  kafka-net:
+    driver: bridge
+
+volumes:
+  kafka-data:
+    driver: local
+  pgdata:
+    driver: local
