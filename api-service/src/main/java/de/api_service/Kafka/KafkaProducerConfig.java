@@ -14,7 +14,7 @@ import org.springframework.kafka.core.ProducerFactory;
 @Configuration
 public class KafkaProducerConfig {
 
-    private String bootstrapAddress= "localhost:29092";
+    private String bootstrapAddress= "kafka2:19092";
 
     @Bean
     public ProducerFactory<String, String> producerFactory(){
