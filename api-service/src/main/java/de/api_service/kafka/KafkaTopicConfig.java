@@ -1,4 +1,4 @@
-package de.api_service.Kafka;
+package de.api_service.kafka;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,15 +12,13 @@ import org.springframework.kafka.core.KafkaAdmin;
 @Configuration
 public class KafkaTopicConfig {
 
-    private String bootstrapAddress= "kafka2:19092";
-
     @Bean
     public KafkaAdmin kafkaAdmin() {
         Map<String, Object> configs = new HashMap<>();
+        String bootstrapAddress = "kafka2:19092";
         configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
         return new KafkaAdmin(configs);
     }
-
 
     @Bean
     public NewTopic topic1() {

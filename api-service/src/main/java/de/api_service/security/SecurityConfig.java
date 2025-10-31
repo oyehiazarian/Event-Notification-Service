@@ -1,4 +1,4 @@
-package de.api_service.config;
+package de.api_service.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,7 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.RequestContextFilter;
-import de.api_service.filter.JwtAuthenticationFilter;
+
 import de.api_service.service.UserDetailsServiceImp;
 
 @EnableWebSecurity
@@ -31,7 +31,6 @@ public class SecurityConfig {
 
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
-
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity, RequestContextFilter requestContextFilter) throws Exception{
@@ -64,6 +63,4 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
-
-
 }

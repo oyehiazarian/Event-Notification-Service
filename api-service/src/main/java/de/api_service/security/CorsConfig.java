@@ -1,4 +1,4 @@
-package de.api_service.config;
+package de.api_service.security;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;

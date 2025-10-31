@@ -1,4 +1,4 @@
-package de.api_service.filter;
+package de.api_service.security;
 
 import java.io.IOException;
 
@@ -9,7 +9,6 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import de.api_service.service.JwtService;
 import de.api_service.service.UserDetailsServiceImp;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
