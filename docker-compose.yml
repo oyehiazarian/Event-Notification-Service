@@ -2,7 +2,7 @@ services:
   # === BACKEND 1 ===
   backend1:
     build: ./api-service
-    container_name: api-services
+    container_name: api-service
     ports:
       - "8090:8090"
     depends_on:
@@ -36,7 +36,7 @@ services:
     build: ./client-service
     container_name: frontend
     ports:
-      - "3001:80"
+      - "3002:80"
     depends_on:
       - backend1
       - backend2

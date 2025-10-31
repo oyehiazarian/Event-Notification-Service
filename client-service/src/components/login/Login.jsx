@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 
-
 function Login() {
   const navigate = useNavigate();
 
@@ -31,15 +30,15 @@ function Login() {
     const dataToSend = {
       username: signupData.username,
       password: signupData.password,
-      vorname: "",
-      nachname: "",
+      vorname: signupData.vorname,
+      nachname: signupData.nachname,
       telefonnummer: signupData.telefonnummer,
       role: "USER",
       createdAt: ""
     };
 
     try {
-      const res = await fetch("http://api-service:8090/register", {
+      const res = await fetch("http://localhost:8090/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dataToSend),
@@ -51,10 +50,10 @@ function Login() {
         localStorage.setItem("token", token);
         navigate("/home");
       } else {
-        alert("Ошибка при регистрации");
+        alert("Error during registration");
       }
     } catch (err) {
-      console.error("Ошибка:", err);
+      console.error("Error:", err);
     }
   };
 
@@ -62,7 +61,7 @@ function Login() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://api-service:8090/login", {
+      const res = await fetch("http://localhost:8090/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(loginData),
@@ -75,10 +74,10 @@ function Login() {
         console.log(token)
         navigate("/home");
       } else {
-        alert("Неверный логин или пароль");
+        alert("Wrong login or password");
       }
     } catch (err) {
-      console.error("Ошибка:", err);
+      console.error("Error:", err);
     }
   };
 
@@ -97,19 +96,33 @@ function Login() {
             required
             onChange={handleSignupChange}
           />
-          <input
-            type="text"
-            name="telefonnummer"
-            placeholder="Nummer"
-            required
-            onChange={handleSignupChange}/>
-          <input
+            <input
             type="password"
             name="password"
             placeholder="Password"
             required
             onChange={handleSignupChange}
           />
+           <input
+            type="text"
+            name="vorname"
+            placeholder="Vorname"
+            required
+            onChange={handleSignupChange}
+          />
+           <input
+            type="text"
+            name="nachname"
+            placeholder="Nachname"
+            required
+            onChange={handleSignupChange}
+          />
+          <input
+            type="text"
+            name="telefonnummer"
+            placeholder="Nummer"
+            required
+            onChange={handleSignupChange}/>
           <button type="submit">Sign up</button>
         </form>
       </div>

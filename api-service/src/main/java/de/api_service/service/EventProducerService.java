@@ -1,4 +1,4 @@
-package de.api_service.Kafka.service;
+package de.api_service.service;
 
 import java.util.List;
 import org.hibernate.Hibernate;
@@ -11,13 +11,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import de.api_service.model.Events;
+import de.api_service.model.User;
 import de.api_service.repository.EventsRepository;
+import de.api_service.repository.UserRepository;
 
 @Service
 public class EventProducerService {
 
     @Autowired
     private EventsRepository eventsRepository;
+    @Autowired
+    private  UserRepository userRepository;
 
 
     @Autowired
@@ -32,11 +36,14 @@ public class EventProducerService {
     public void sendNewEvents() throws JsonProcessingException {
         List<Events> events = eventsRepository.findByIdGreaterThan(lastId);
 
-
         for(Events event:events){
             Hibernate.initialize(event.getUserId());
             String json = convertEventToJson(event);
-            kafkaTemplate.send(TOPIC, event.getUserId().getUsername(), json);
+
+            User user = userRepository.findById(event.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            kafkaTemplate.send(TOPIC, user.getUsername(), json);
         }
 
         if (!events.isEmpty()) {

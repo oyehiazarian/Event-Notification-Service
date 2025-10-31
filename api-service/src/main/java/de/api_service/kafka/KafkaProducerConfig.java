@@ -1,4 +1,4 @@
-package de.api_service.Kafka;
+package de.api_service.kafka;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +29,4 @@ public class KafkaProducerConfig {
     public KafkaTemplate<String, String> kafkaTemplate(){
         return new KafkaTemplate<>(producerFactory());
     }
-
-
 }

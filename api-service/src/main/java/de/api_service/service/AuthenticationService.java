@@ -1,6 +1,7 @@
 package de.api_service.service;
 
-import java.util.Optional;
+import java.util.HashMap;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -9,9 +10,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.api_service.model.AuthenticationResponse;
 import de.api_service.model.User;
 import de.api_service.repository.UserRepository;
+import de.api_service.security.JwtService;
 
 @Service
 public class AuthenticationService {
@@ -23,9 +27,6 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
 
     private final JwtService jwtService;
-
-    public static Long USER_ID;
-
 
     public AuthenticationService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtService jwtService) {
         this.userRepository = userRepository;
@@ -68,5 +69,22 @@ public class AuthenticationService {
 
         return new AuthenticationResponse(token);
 
+    }
+
+    public String getAllUsers() {
+        List<User> users = userRepository.findAll();
+        HashMap<String, String> hashMap = new HashMap<>();
+
+        for (User user : users) {
+            hashMap.put(user.getId().toString(), user.getUsername());
+        }
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.writeValueAsString(hashMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "{}";
+        }
     }
 }

@@ -33,8 +33,7 @@ public class EventsService {
         events.setTopic(request.getTopic());
         events.setContent(request.getContent());
         events.setDue_date(request.getDue_date());
-
-        events.setUserId(gettingUserId());
+        events.setUserId(request.getUserId());
         eventsRepository.save(events);
         return true;
 

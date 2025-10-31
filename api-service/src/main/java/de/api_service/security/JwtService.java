@@ -1,4 +1,4 @@
-package de.api_service.service;
+package de.api_service.security;
 
 import java.util.Date;
 import java.util.function.Function;

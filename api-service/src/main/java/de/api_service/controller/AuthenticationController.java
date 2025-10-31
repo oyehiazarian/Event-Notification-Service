@@ -1,16 +1,17 @@
 package de.api_service.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+
 import de.api_service.model.AuthenticationResponse;
 import de.api_service.model.User;
 import de.api_service.service.AuthenticationService;
 
 @RestController
 public class AuthenticationController {
-
 
     private final AuthenticationService authenticationService;
 
@@ -19,13 +20,18 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> register(@RequestBody User request){
+    public ResponseEntity<AuthenticationResponse> register(@RequestBody User request) {
 
         return ResponseEntity.ok(authenticationService.register(request));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthenticationResponse> login(@RequestBody User request){
+    public ResponseEntity<AuthenticationResponse> login(@RequestBody User request) {
         return ResponseEntity.ok(authenticationService.authenticate(request));
+    }
+
+    @GetMapping("/all-users")
+    public String getListOfAllUsers() {
+        return authenticationService.getAllUsers();
     }
 }
