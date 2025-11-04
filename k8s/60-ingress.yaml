@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ens-ingress
+  namespace: ens
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: ens.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port: { number: 80 }
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend1
+                port: { number: 8090 }
+          - path: /kafka-ui
+            pathType: Prefix
+            backend:
+              service:
+                name: kafka-ui
+                port: { number: 8080 }
+          - path: /pgadmin
+            pathType: Prefix
+            backend:
+              service:
+                name: pgadmin
+                port: { number: 80 }
