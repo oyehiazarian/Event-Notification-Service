@@ -10,11 +10,14 @@ variables:
   COMPOSE_DOCKER_CLI_BUILD: 1
   DOCKER_BUILDKIT: 1
 
+image: docker:latest
+
 services:
   - docker:dind
 
 before_script:
-  - apk add --no-cache docker-compose
+  - docker version
+  - docker compose version || echo "Docker Compose v2 wird verwendet (kein separates binary nötig)."
 
 # --- SETUP ---
 setup:
@@ -26,13 +29,12 @@ setup:
     - test -f docker-compose.yml
     - echo "Setup complete."
 
-
 # --- BUILD ---
 build:
   stage: build
   script:
     - echo "Building all services with Docker Compose..."
-    - docker-compose build
+    - docker compose build
   only:
     - main
     - master
@@ -43,13 +45,12 @@ test:
   stage: test
   script:
     - echo "Starting containers..."
-    - docker-compose up -d
+    - docker compose up -d
     - echo "Waiting for services to start..."
     - sleep 15
     - echo "Checking running containers..."
     - docker ps
     - echo "Running health checks..."
-    - docker-compose ps
+    - docker compose ps
   after_script:
-    - docker-compose down
-
+    - docker compose down
