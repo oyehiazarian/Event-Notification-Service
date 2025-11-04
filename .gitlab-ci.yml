@@ -1,0 +1,60 @@
+stages:
+  - setup
+  - build
+  - test
+
+variables:
+  # Docker-in-Docker для независимого окружения
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+  COMPOSE_DOCKER_CLI_BUILD: 1
+  DOCKER_BUILDKIT: 1
+
+services:
+  - docker:dind
+
+before_script:
+  - apk add --no-cache docker-compose
+
+# --- SETUP ---
+setup:
+  stage: setup
+  script:
+    - echo "Checking repository structure..."
+    - ls -la
+    - echo "Checking Docker Compose file..."
+    - test -f docker-compose.yml
+    - echo "Setup complete."
+  tags:
+    - docker
+
+# --- BUILD ---
+build:
+  stage: build
+  script:
+    - echo "Building all services with Docker Compose..."
+    - docker-compose build
+  tags:
+    - docker
+  only:
+    - main
+    - master
+    - merge_requests
+
+# --- TEST ---
+test:
+  stage: test
+  script:
+    - echo "Starting containers..."
+    - docker-compose up -d
+    - echo "Waiting for services to start..."
+    - sleep 15
+    - echo "Checking running containers..."
+    - docker ps
+    - echo "Running health checks..."
+    - docker-compose ps
+  after_script:
+    - docker-compose down
+  tags:
+    - docker
+
