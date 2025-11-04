@@ -25,8 +25,7 @@ setup:
     - echo "Checking Docker Compose file..."
     - test -f docker-compose.yml
     - echo "Setup complete."
-  tags:
-    - docker
+
 
 # --- BUILD ---
 build:
@@ -34,8 +33,6 @@ build:
   script:
     - echo "Building all services with Docker Compose..."
     - docker-compose build
-  tags:
-    - docker
   only:
     - main
     - master
@@ -55,6 +52,4 @@ test:
     - docker-compose ps
   after_script:
     - docker-compose down
-  tags:
-    - docker
 
