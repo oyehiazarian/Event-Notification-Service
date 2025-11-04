@@ -1,0 +1,129 @@
+# === BACKEND 1: api-service ===
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend1
+  namespace: ens
+spec:
+  selector: { app: backend1 }
+  ports:
+    - port: 8090
+      targetPort: 8090
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend1
+  namespace: ens
+  labels: { app: backend1 }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: backend1 } }
+  template:
+    metadata:
+      labels: { app: backend1 }
+    spec:
+      containers:
+        - name: backend1
+          image:  myorg/api-service:1.0   # ← замени на свой образ
+          ports: [ { containerPort: 8090 } ]
+          env:
+            - name: SPRING_DATASOURCE_URL
+              valueFrom: { configMapKeyRef: { name: ens-config, key: SPRING_DATASOURCE_URL } }
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom: { secretKeyRef: { name: ens-secrets, key: POSTGRES_USER } }
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom: { secretKeyRef: { name: ens-secrets, key: POSTGRES_PASSWORD } }
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              valueFrom: { configMapKeyRef: { name: ens-config, key: KAFKA_BOOTSTRAP_SERVERS } }
+          readinessProbe:
+            httpGet: { path: /actuator/health/readiness, port: 8090 }
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /actuator/health/liveness, port: 8090 }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+
+# === BACKEND 2: bot-consumer ===
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend2
+  namespace: ens
+spec:
+  selector: { app: backend2 }
+  ports:
+    - port: 8070
+      targetPort: 8070
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend2
+  namespace: ens
+  labels: { app: backend2 }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: backend2 } }
+  template:
+    metadata:
+      labels: { app: backend2 }
+    spec:
+      containers:
+        - name: backend2
+          image: myorg/bot-consumer:1.0
+          ports: [ { containerPort: 8070 } ]
+          env:
+            - name: SPRING_DATASOURCE_URL
+              valueFrom: { configMapKeyRef: { name: ens-config, key: SPRING_DATASOURCE_URL } }
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom: { secretKeyRef: { name: ens-secrets, key: POSTGRES_USER } }
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom: { secretKeyRef: { name: ens-secrets, key: POSTGRES_PASSWORD } }
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              valueFrom: { configMapKeyRef: { name: ens-config, key: KAFKA_BOOTSTRAP_SERVERS } }
+          readinessProbe:
+            httpGet: { path: /actuator/health/readiness, port: 8070 }
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /actuator/health/liveness, port: 8070 }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+
+# === FRONTEND: client-service (Nginx/SPA) ===
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: ens
+spec:
+  selector: { app: frontend }
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: ens
+  labels: { app: frontend }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: frontend } }
+  template:
+    metadata:
+      labels: { app: frontend }
+    spec:
+      containers:
+        - name: frontend
+          image: myorg/client-service:1.0
+          ports: [ { containerPort: 80 } ]
+          env:
+            - name: PUBLIC_API_URL
+              valueFrom: { configMapKeyRef: { name: ens-config, key: PUBLIC_API_URL } }
+
