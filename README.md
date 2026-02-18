@@ -1,26 +1,38 @@
 Event Notification Service
 
-Ein Business-Tool zur einfachen Organisation von Events.
-Im Web-Client kann man Events für bestimmte Mitarbeiter erstellen.
-Die Mitarbeiter verbinden sich über einen Telegram-Bot mit ihrem Benutzernamen – und erhalten automatisch Benachrichtigungen über neue Events direkt im Messenger.
+Event Notification Service is a business-oriented application designed to simplify event organization and internal communication.
+
+Using the web client, administrators can create events for specific employees.
+Employees connect to the system via a Telegram bot using their username and automatically receive notifications about new events directly in the messenger.
 
 
-Systemarchitektur – Event Notification Service
+System Architecture
+The application is built as a distributed system consisting of multiple services:
 
-Die Anwendung besteht aus mehreren Services und Tools:
-Backend 1 – verantwortlich für Authentifizierung, Erstellung und Speicherung von Events sowie deren Publikation über Kafka.
-Backend 2 – betreibt den Telegram-Bot, der Events abonniert, filtert und an die richtigen Benutzer sendet.
-Frontend-Service – bietet eine Weboberfläche zum Erstellen von Events und Versenden von Topics.
+Backend Service 1:
+ Handles authentication
+ Creates and stores events
+ Publishes event data to Kafka
+
+Backend Service 2:
+ Hosts the Telegram Bot
+ Subscribes to Kafka events
+ Filters events by user
+ Sends notifications to the appropriate employees via Telegram
+
+Frontend Service:
+ Provides a web interface
+ Allows creation and management of events
+ Sends event topics to the backend
 
 
+Technologies Used
+The solution is based on modern and reliable technologies:
 
-
-Verwendete Technologien
-Unsere Lösung basiert auf modernen, zuverlässigen Tools und Frameworks:
-
-Java & Spring Boot – Kern der Backend-Logik
-Spring Security – Authentifizierung und Zugriffsschutz
-React (JavaScript) – Benutzerfreundliches Web-Frontend
-PostgreSQL / pgAdmin4 – Datenverwaltung und Administration
-Kafka – Event-Streaming und Kommunikation zwischen Services
-Docker Compose – Containerisierung und einfaches Deployment
+Java & Spring Boot – Core backend logic
+Spring Security – Authentication and access control
+React (JavaScript) – User-friendly web frontend
+PostgreSQL – Persistent data storage
+pgAdmin 4 – Database administration
+Apache Kafka – Event streaming and inter-service communication
+Docker Compose – Containerization and simplified deployment
