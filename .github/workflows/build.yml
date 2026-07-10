@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: {}   # кнопка ручного запуска — полезно для передеплоя без коммита
+  workflow_dispatch: {}
 
 env:
   REGISTRY: ghcr.io
@@ -93,8 +93,7 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    # деплоим даже если часть matrix-джоб была пропущена (changed=false),
-    # но НЕ деплоим, если какая-то сборка реально упала
+
     if: ${{ !cancelled() && needs.build-and-push.result != 'failure' }}
     steps:
       - name: Deploy over SSH

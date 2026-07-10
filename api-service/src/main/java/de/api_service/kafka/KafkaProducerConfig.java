@@ -13,8 +13,8 @@ import org.springframework.kafka.core.ProducerFactory;
 
 @Configuration
 public class KafkaProducerConfig {
-
-    private String bootstrapAddress= "${KAFKA_SERVERS:kafka2:9092}";
+    @Value("${KAFKA_SERVERS:kafka2:9092}")
+    private String bootstrapAddress;
 
     @Bean
     public ProducerFactory<String, String> producerFactory(){
