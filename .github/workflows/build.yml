@@ -1,0 +1,113 @@
+name: Build, Push & Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}   # кнопка ручного запуска — полезно для передеплоя без коммита
+
+env:
+  REGISTRY: ghcr.io
+  GITHUB_OWNER: oyehiazarian
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      api-service: ${{ steps.changes.outputs.api-service }}
+      bot-consumer: ${{ steps.changes.outputs.bot-consumer }}
+      client-service: ${{ steps.changes.outputs.client-service }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            api-service:
+              - 'api-service/**'
+            bot-consumer:
+              - 'bot-consumer/**'
+            client-service:
+              - 'client-service/**'
+
+  build-and-push:
+    needs: changes
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - service: api-service
+            context: ./api-service
+            changed: ${{ needs.changes.outputs.api-service }}
+          - service: bot-consumer
+            context: ./bot-consumer
+            changed: ${{ needs.changes.outputs.bot-consumer }}
+          - service: client-service
+            context: ./client-service
+            changed: ${{ needs.changes.outputs.client-service }}
+      fail-fast: false
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        if: matrix.changed == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        if: matrix.changed == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        if: matrix.changed == 'true'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.GITHUB_OWNER }}/${{ matrix.service }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest
+
+      - name: Build and push
+        if: matrix.changed == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    # деплоим даже если часть matrix-джоб была пропущена (changed=false),
+    # но НЕ деплоим, если какая-то сборка реально упала
+    if: ${{ !cancelled() && needs.build-and-push.result != 'failure' }}
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -e
+            cd ${{ secrets.PROJECT_DIR }}
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USER }} --password-stdin
+            docker compose pull
+            docker compose up -d
+            docker image prune -f

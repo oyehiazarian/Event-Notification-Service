@@ -22,7 +22,7 @@ const Home = () => {
   
     setLoadingUsers(true);
   
-    fetch("http://localhost:8090/all-users", {
+    fetch("/api/all-users", {
       method: "GET", 
       headers: {
         "Content-Type": "application/json",
@@ -62,7 +62,7 @@ const Home = () => {
       return;
     }
     e.preventDefault();
-    fetch('http://localhost:8090/new_event', {
+    fetch('/api/new_event', {
       method: 'POST',
     
       headers: {
