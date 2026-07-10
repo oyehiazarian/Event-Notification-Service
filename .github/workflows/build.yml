@@ -107,7 +107,6 @@ jobs:
           script: |
             set -e
             cd ${{ secrets.PROJECT_DIR }}
-            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USER }} --password-stdin
             docker compose pull
             docker compose up -d
             docker image prune -f
