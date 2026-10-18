@@ -1,131 +1,158 @@
+# Secrets and credentials come from .env (see .env.example).
 services:
-  # === BACKEND 1 ===
-  backend1:
+  api-service:
     build: ./api-service
+    image: ghcr.io/${REGISTRY_OWNER:-oyehiazarian}/api-service:latest
     container_name: api-service
+    restart: unless-stopped
     ports:
       - "8090:8090"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-NotificationSystem}
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      KAFKA_SERVERS: kafka2:19092
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3002}
     depends_on:
-      - kafka2
-      - postgres
+      postgres:
+        condition: service_healthy
+      kafka2:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8090/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - kafka-net
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/NotificationSystem
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
 
-  # === BACKEND 2 ===
-  backend2:
+  bot-consumer:
     build: ./bot-consumer
+    image: ghcr.io/${REGISTRY_OWNER:-oyehiazarian}/bot-consumer:latest
     container_name: bot-consumer
-    ports:
-      - "8070:8070"
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-NotificationSystem}
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      KAFKA_SERVERS: kafka2:19092
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?set TELEGRAM_BOT_TOKEN in .env}
+      BOT_USERNAME: ${BOT_USERNAME:-event001_bot}
     depends_on:
-      - kafka2
-      - postgres
+      postgres:
+        condition: service_healthy
+      kafka2:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8070/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - kafka-net
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/NotificationSystem
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
 
-  # === FRONTEND ===
-  frontend:
+  client-service:
     build: ./client-service
+    image: ghcr.io/${REGISTRY_OWNER:-oyehiazarian}/client-service:latest
     container_name: frontend
+    restart: unless-stopped
     ports:
       - "3002:80"
     depends_on:
-      - backend1
-      - backend2
+      api-service:
+        condition: service_healthy
     networks:
       - kafka-net
 
-  # === ZOOKEEPER ===
   zoo2:
     image: confluentinc/cp-zookeeper:7.3.2
     hostname: zoo2
     container_name: zoo2
-    ports:
-      - "2181:2181"
+    restart: unless-stopped
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_SERVER_ID: 1
     networks:
       - kafka-net
 
-  # === KAFKA ===
   kafka2:
     image: confluentinc/cp-kafka:7.3.2
     hostname: kafka2
     container_name: kafka2
-    ports:
-      - "9092:9092"
-      - "29092:29092"
-      - "19092:19092"
-      - "9999:9999"
+    restart: unless-stopped
     environment:
-      KAFKA_LISTENERS: INTERNAL://kafka2:9092,EXTERNAL://0.0.0.0:29092,DOCKER://0.0.0.0:19092
+      KAFKA_LISTENERS: INTERNAL://kafka2:9092,DOCKER://0.0.0.0:19092
       KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka2:9092,DOCKER://kafka2:19092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_ZOOKEEPER_CONNECT: zoo2:2181
       KAFKA_BROKER_ID: 1
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_JMX_PORT: 9999
-      KAFKA_JMX_HOSTNAME: 127.0.0.1
-      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
-      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
     depends_on:
       - zoo2
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server kafka2:9092 --list"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
     networks:
       - kafka-net
     volumes:
       - kafka-data:/var/lib/kafka/data
 
-  # === KAFKA UI ===
-  kafka-ui2:
-    container_name: kafka-ui2
-    image: provectuslabs/kafka-ui:v0.7.1
-    ports:
-      - "8080:8080"
-    depends_on:
-      - kafka2
-    environment:
-      DYNAMIC_CONFIG_ENABLED: 'true'
-      KAFKA_CLUSTERS_0_NAME: wizard_test
-      KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS: kafka2:19092
-    networks:
-      - kafka-net
-
-  # === POSTGRES ===
   postgres:
     image: postgres:15
     container_name: postgres
+    restart: unless-stopped
     ports:
-      - "5434:5432"
+      - "127.0.0.1:5434:5432"
     environment:
-      POSTGRES_DB: NotificationSystem
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-NotificationSystem}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-NotificationSystem}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
       - kafka-net
 
-  # === PGADMIN ===
+  # Optional developer tools: docker compose --profile tools up
+  kafka-ui2:
+    profiles: ["tools"]
+    container_name: kafka-ui2
+    image: provectuslabs/kafka-ui:v0.7.1
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      - kafka2
+    environment:
+      DYNAMIC_CONFIG_ENABLED: 'true'
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS: kafka2:19092
+    networks:
+      - kafka-net
+
   pgadmin:
+    profiles: ["tools"]
     image: dpage/pgadmin4
     container_name: pgadmin
     ports:
-      - "5050:80"
+      - "127.0.0.1:5050:80"
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?set PGADMIN_PASSWORD in .env}
     depends_on:
       - postgres
     networks:

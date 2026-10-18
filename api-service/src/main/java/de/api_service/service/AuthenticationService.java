@@ -1,8 +1,5 @@
 package de.api_service.service;
 
-import java.util.HashMap;
-import java.util.List;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -10,9 +7,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import de.api_service.model.AuthenticationResponse;
+import de.api_service.dto.AuthenticationResponse;
+import de.api_service.dto.LoginRequest;
+import de.api_service.dto.RegisterRequest;
+import de.api_service.model.Role;
 import de.api_service.model.User;
 import de.api_service.repository.UserRepository;
 import de.api_service.security.JwtService;
@@ -21,70 +19,56 @@ import de.api_service.security.JwtService;
 public class AuthenticationService {
 
     private final UserRepository userRepository;
-
     private final PasswordEncoder passwordEncoder;
-
     private final AuthenticationManager authenticationManager;
-
     private final JwtService jwtService;
 
-    public AuthenticationService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtService jwtService) {
+    public AuthenticationService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+            AuthenticationManager authenticationManager, JwtService jwtService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
     }
 
-
-    public AuthenticationResponse register(User request){
-        if (userRepository.findByUsername(request.getUsername()).isPresent()){
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Account with this username is already exists");
+    /** Self-registration always creates a regular USER; admins are created out of band. */
+    public AuthenticationResponse register(RegisterRequest request) {
+        String username = normalize(request.username());
+        if (userRepository.findByUsername(username).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Account with this username already exists");
         }
 
         User user = new User();
-
-        user.setUsername(request.getUsername());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setVorname(request.getVorname());
-        user.setNachname(request.getNachname());
-        user.setTelefonnummer(request.getTelefonnummer());
-        user.setRole(request.getRole());
-
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(request.password()));
+        user.setVorname(request.vorname());
+        user.setNachname(request.nachname());
+        user.setTelefonnummer(request.telefonnummer());
+        user.setRole(Role.USER);
         userRepository.save(user);
-        String token = jwtService.generateToken(user);
 
-        return new AuthenticationResponse(token);
+        return toResponse(user);
     }
 
-
-    public AuthenticationResponse authenticate(User request) {
+    public AuthenticationResponse authenticate(LoginRequest request) {
+        String username = normalize(request.username());
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword()
-                ));
+                new UsernamePasswordAuthenticationToken(username, request.password()));
 
-        User user = userRepository.findByUsername(request.getUsername()).orElseThrow();
-        String token = jwtService.generateToken(user);
-
-        return new AuthenticationResponse(token);
-
+        User user = userRepository.findByUsername(username).orElseThrow();
+        return toResponse(user);
     }
 
-    public String getAllUsers() {
-        List<User> users = userRepository.findAll();
-        HashMap<String, String> hashMap = new HashMap<>();
-
-        for (User user : users) {
-            hashMap.put(user.getId().toString(), user.getUsername());
+    /** Usernames double as Telegram handles, which are case-insensitive and written with an optional '@'. */
+    public static String normalize(String username) {
+        String value = username.trim();
+        if (value.startsWith("@")) {
+            value = value.substring(1);
         }
+        return value.toLowerCase();
+    }
 
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.writeValueAsString(hashMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "{}";
-        }
+    private AuthenticationResponse toResponse(User user) {
+        return new AuthenticationResponse(jwtService.generateToken(user), user.getUsername(), user.getRole());
     }
 }

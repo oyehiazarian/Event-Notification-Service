@@ -1,10 +1,19 @@
 package de.api_service.service;
 
 import java.util.List;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import de.api_service.model.Events;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import de.api_service.dto.EventRequest;
+import de.api_service.dto.EventResponse;
+import de.api_service.model.Event;
+import de.api_service.model.Role;
 import de.api_service.model.User;
 import de.api_service.repository.EventsRepository;
 import de.api_service.repository.UserRepository;
@@ -13,60 +22,59 @@ import de.api_service.repository.UserRepository;
 public class EventsService {
 
     private final EventsRepository eventsRepository;
-
     private final UserRepository userRepository;
 
-    public final AuthenticationService authenticationService;
-
-    public EventsService(EventsRepository eventsRepository, UserRepository userRepository,
-            AuthenticationService authenticationService) {
+    public EventsService(EventsRepository eventsRepository, UserRepository userRepository) {
         this.eventsRepository = eventsRepository;
         this.userRepository = userRepository;
-        this.authenticationService = authenticationService;
-
     }
 
-    public boolean registerNewEvent(Events request) {
-        Events events = new Events();
+    @Transactional
+    public EventResponse create(EventRequest request) {
+        User recipient = userRepository.findById(request.userId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipient not found"));
 
-        events.setTitle(request.getTitle());
-        events.setTopic(request.getTopic());
-        events.setContent(request.getContent());
-        events.setDue_date(request.getDue_date());
-        events.setUserId(request.getUserId());
-        eventsRepository.save(events);
-        return true;
+        Event event = new Event();
+        event.setTitle(request.title());
+        event.setTopic(request.topic());
+        event.setContent(request.content());
+        event.setDueDate(request.dueDate());
+        event.setUserId(recipient.getId());
+        event.setSent(false);
 
+        return toResponse(eventsRepository.save(event), recipient.getUsername());
     }
 
-    public String allEventsFromUser() {
-        List<Events> events = eventsRepository.findAllByUserId(gettingUserId());
+    /** Admins see every event, regular users only the ones addressed to them. */
+    @Transactional(readOnly = true)
+    public List<EventResponse> list(User current) {
+        List<Event> events = current.getRole() == Role.ADMIN
+                ? eventsRepository.findAllByOrderByDueDateAsc()
+                : eventsRepository.findAllByUserIdOrderByDueDateAsc(current.getId());
 
-        StringBuilder result = new StringBuilder();
+        List<Long> userIds = events.stream().map(Event::getUserId).filter(Objects::nonNull).distinct().toList();
+        Map<Long, String> usernames = userRepository.findAllById(userIds).stream()
+                .collect(Collectors.toMap(User::getId, User::getUsername));
 
-        for (Events event : events) {
-            result.append("Title: ").append(event.getTitle()).append("\n")
-                    .append("Topic: ").append(event.getTopic()).append("\n")
-                    .append("Due Date: ").append(event.getDue_date()).append("\n")
-                    .append("Content: ").append(event.getContent()).append("\n")
-                    .append("------\n");
+        return events.stream()
+                .map(e -> toResponse(e, usernames.get(e.getUserId())))
+                .toList();
+    }
+
+    @Transactional
+    public void delete(Long id, User current) {
+        Event event = eventsRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
+
+        boolean owner = current.getId().equals(event.getUserId());
+        if (!owner && current.getRole() != Role.ADMIN) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot delete this event");
         }
-
-        return result.toString();
+        eventsRepository.delete(event);
     }
 
-    public String deleteEventsFromUser(Events events) {
-        eventsRepository.deleteById(events.getId());
-        return "OK, DELETED";
-    }
-
-    public User gettingUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        return user;
+    private EventResponse toResponse(Event e, String username) {
+        return new EventResponse(e.getId(), e.getTitle(), e.getTopic(), e.getContent(), e.getDueDate(),
+                e.getUserId(), username);
     }
 }
