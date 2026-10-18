@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  pull_request:
   workflow_dispatch: {}
 
 env:
@@ -11,7 +12,42 @@ env:
   GITHUB_OWNER: oyehiazarian
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: client-service/package-lock.json
+
+      - name: api-service tests
+        working-directory: api-service
+        run: ./mvnw -B test
+
+      - name: bot-consumer tests
+        working-directory: bot-consumer
+        run: ./mvnw -B test
+
+      - name: client-service tests and build
+        working-directory: client-service
+        run: |
+          npm ci
+          npm test
+          npm run build
+
   changes:
+    needs: test
+    if: github.event_name != 'pull_request'
+
     runs-on: ubuntu-latest
     outputs:
       api-service: ${{ steps.changes.outputs.api-service }}
@@ -22,7 +58,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: dorny/paths-filter@v2
+      - uses: dorny/paths-filter@v3
         id: changes
         with:
           filters: |
@@ -94,7 +130,7 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
 
-    if: ${{ !cancelled() && needs.build-and-push.result != 'failure' }}
+    if: ${{ github.ref == 'refs/heads/main' && needs.build-and-push.result == 'success' }}
     steps:
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1
@@ -106,6 +142,6 @@ jobs:
           script: |
             set -e
             cd ${{ secrets.PROJECT_DIR }}
-            docker compose pull
+            docker compose pull api-service bot-consumer client-service
             docker compose up -d
             docker image prune -f

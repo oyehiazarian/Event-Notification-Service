@@ -40,10 +40,32 @@
   color: inherit;
 }
 
+.nav-auth {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-user {
+  color: #374151;
+}
+
+.nav-badge {
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 12px;
+  border-radius: 999px;
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
 .nav-auth .logout-link {
   font-weight: 600;
-  text-decoration: none;
+  font-size: inherit;
   color: #111827;
+  background: none;
+  border: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
 }

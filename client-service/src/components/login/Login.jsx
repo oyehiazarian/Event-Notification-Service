@@ -1,151 +1,70 @@
-import './Login.css'
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import './Login.css';
+import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { api, session } from '../../api';
 
+const emptySignup = { username: '', password: '', vorname: '', nachname: '', telefonnummer: '' };
 
 function Login() {
   const navigate = useNavigate();
 
-  const [signupData, setSignupData] = useState({
-    username: "",
-    password: "",
-  });
+  const [signupData, setSignupData] = useState(emptySignup);
+  const [loginData, setLoginData] = useState({ username: '', password: '' });
+  const [signupError, setSignupError] = useState('');
+  const [loginError, setLoginError] = useState('');
 
-  const [loginData, setLoginData] = useState({
-    username: "",
-    password: "",
-  });
+  const handleSignupChange = (e) => setSignupData({ ...signupData, [e.target.name]: e.target.value });
+  const handleLoginChange = (e) => setLoginData({ ...loginData, [e.target.name]: e.target.value });
 
-  const handleSignupChange = (e) => {
-    setSignupData({ ...signupData, [e.target.name]: e.target.value });
-  };
-
-  const handleLoginChange = (e) => {
-    setLoginData({ ...loginData, [e.target.name]: e.target.value });
-  };
-
-  const handleSignupSubmit = async (e) => {
-    e.preventDefault();
-
-    const dataToSend = {
-      username: signupData.username,
-      password: signupData.password,
-      vorname: signupData.vorname,
-      nachname: signupData.nachname,
-      telefonnummer: signupData.telefonnummer,
-      role: "USER",
-      createdAt: ""
-    };
-
+  const submit = async (path, body, setError) => {
+    setError('');
     try {
-      const res = await fetch("/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(dataToSend),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        const token = data.token; 
-        localStorage.setItem("token", token);
-        navigate("/home");
-      } else {
-        alert("Error during registration");
-      }
+      const data = await api(path, { method: 'POST', body, authenticated: false });
+      session.save(data);
+      navigate('/home');
     } catch (err) {
-      console.error("Error:", err);
+      setError(err.message);
     }
   };
 
-  const handleLoginSubmit = async (e) => {
+  const handleSignupSubmit = (e) => {
     e.preventDefault();
+    submit('/auth/register', signupData, setSignupError);
+  };
 
-    try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(loginData),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        const token = data.token; 
-        localStorage.setItem("token", token);
-        console.log(token)
-        navigate("/home");
-      } else {
-        alert("Wrong login or password");
-      }
-    } catch (err) {
-      console.error("Error:", err);
-    }
+  const handleLoginSubmit = (e) => {
+    e.preventDefault();
+    submit('/auth/login', loginData, setLoginError);
   };
 
   return (
-    <div className="main">
-      <input type="checkbox" id="chk" aria-hidden="true" />
+    <div className="login-page">
+      <div className="main">
+        <input type="checkbox" id="chk" aria-hidden="true" />
 
-      <div className="signup">
-        <form onSubmit={handleSignupSubmit}>
-          <label htmlFor="chk" aria-hidden="true">Sign up</label>
+        <div className="signup">
+          <form onSubmit={handleSignupSubmit}>
+            <label htmlFor="chk" aria-hidden="true">Sign up</label>
 
-          <input
-            type="text"
-            name="username"
-            placeholder="Username"
-            required
-            onChange={handleSignupChange}
-          />
-            <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            required
-            onChange={handleSignupChange}
-          />
-           <input
-            type="text"
-            name="vorname"
-            placeholder="Vorname"
-            required
-            onChange={handleSignupChange}
-          />
-           <input
-            type="text"
-            name="nachname"
-            placeholder="Nachname"
-            required
-            onChange={handleSignupChange}
-          />
-          <input
-            type="text"
-            name="telefonnummer"
-            placeholder="Nummer"
-            required
-            onChange={handleSignupChange}/>
-          <button type="submit">Sign up</button>
-        </form>
-      </div>
+            <input type="text" name="username" placeholder="Username (= Telegram username)" required onChange={handleSignupChange} />
+            <input type="password" name="password" placeholder="Password (min. 8 characters)" minLength={8} required onChange={handleSignupChange} />
+            <input type="text" name="vorname" placeholder="Vorname" required onChange={handleSignupChange} />
+            <input type="text" name="nachname" placeholder="Nachname" required onChange={handleSignupChange} />
+            <input type="text" name="telefonnummer" placeholder="Nummer" onChange={handleSignupChange} />
+            <button type="submit">Sign up</button>
+            {signupError && <p className="form-error" role="alert">{signupError}</p>}
+          </form>
+        </div>
 
-      <div className="login">
-        <form onSubmit={handleLoginSubmit}>
-          <label htmlFor="chk" aria-hidden="true">Login</label>
-          <input
-            type="username"
-            name="username"
-            placeholder="Username"
-            required
-            onChange={handleLoginChange}
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            required
-            onChange={handleLoginChange}
-          />
-          <button type="submit">Login</button>
-        </form>
+        <div className="login">
+          <form onSubmit={handleLoginSubmit}>
+            <label htmlFor="chk" aria-hidden="true">Login</label>
+            <input type="text" name="username" placeholder="Username" required onChange={handleLoginChange} />
+            <input type="password" name="password" placeholder="Password" required onChange={handleLoginChange} />
+            <button type="submit">Login</button>
+            {loginError && <p className="form-error" role="alert" style={{ color: '#b91c1c' }}>{loginError}</p>}
+          </form>
+        </div>
       </div>
     </div>
   );

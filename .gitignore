@@ -44,15 +44,9 @@ logs/
 .gradle/
 build/
 
-# React
-/src/**/*.jsx.bak
-
 # OS
 Thumbs.db
 .DS_Store
-
-# Git
-.git/
 
 # Temporary files
 *.tmp
